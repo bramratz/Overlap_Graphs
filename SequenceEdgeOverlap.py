@@ -11,31 +11,44 @@ Created on Tue Jun 30 10:20:19 2020
 
 # Import modules 
 import sys
-from typing import List
+from typing import List, Dict
+from collections import defaultdict
+from itertools import combinations
+
+# Function: Checks if suffix of sequence1 matches prefix of sequence2
+#   by k-overlapping characters 
+def overlap(seq1: str, seq2: str, k: int) -> bool:
+    """
+    Given two sequences and an integar returns True if the suffix of 
+    seq1 overlaps the prefix of seq2 by k. This is equivalent to a 
+    directed edge.
+    """
+    return seq1[-k:] == seq2[:k]
 
 # Function for finding pairs of nodes, s and t, that are connected by a direct
 #   edge as determined by k number of bases at the end of seq s that match 
 #   k number of bases at the beginning of sequence t that are exact matches 
-def findDirectEdges(seqIDs: List, seqList: List, k: int) -> List:
+def findDirectEdges(sequences: Dict, k: int) -> List:
     """
-    Given a list of sequence ID's and a list of corresponding sequences
+    Given a dictionary of sequence ID's and corresponding sequences
     and a value k which determines the overlap between sequence s and t,
     returns an adjacency list of all pairs nodes that share a directed 
     edge. 
     """
     pairs = [] # List to hold pairs of nodes connected by direct edge 
-    # Iterate each list item and compare to every other list item excatly once
-    for seq1 in range(len(seqList)):
-        suffix = seqList[seq1][-k:] # last bases of seq1 trying to match 
-        for seq2 in range(seq1 + 1, len(seqList)):
-            prefix = seqList[seq2][:k] # first bases of seq2 trying to match 
-            if suffix == prefix: # Append pair of IDs if match is found 
-                pairs.append(seqIDs[seq1] + " " + seqIDs[seq2])
+    # Find all combinations of DNA sequences in the sequence dictionary
+    for s, t in combinations(sequences, 2):
+        sSeq, tSeq = sequences[s], sequences[t]
+        # If suffix of sSeq and prefix of tSeq overlap, or vice versa
+        #   append the pair of sequence IDs to pairs list
+        if overlap(sSeq, tSeq, k):
+            pairs.append(s + " " + t)
+        if overlap(tSeq, sSeq, k):
+            pairs.append(s + " " + t)
     return pairs # return list of pairs 
             
 # List to hold lines from raw fasta file 
-IDs = []
-sequence = []
+seqFromFasta = defaultdict(int)
 
 # Open and parse input file
 with open(sys.argv[1]) as f:
@@ -47,8 +60,7 @@ with open(sys.argv[1]) as f:
             # If sequences in temp when new ID reached add sequences to main 
             # list and empty tempList 
             if not len(tempList) == 0:
-                IDs.append(tempList[0][1:]) # Append sequence ID to IDs list. Remove '>'
-                sequence.append(tempList[1:]) # Append sequence to sequence list 
+                seqFromFasta[tempList[0][1:]] = tempList[1:] # ID = key, sequence = value
                 tempList = [line,] # Empty List, Add new ID to it 
             # Add seq ID to list if it's the first sequence ID
             else:
@@ -62,13 +74,12 @@ with open(sys.argv[1]) as f:
                     tempList.append(char)
     # Handles sequence for last ID
     else:
-        IDs.append(tempList[0][1:]) # Append sequence ID to IDs list. Remove '>'
-        sequence.append(tempList[1:]) # Append sequence to sequence list 
+        seqFromFasta[tempList[0][1:]] = tempList[1:] # ID = key, sequence = value
 
 # k value to determine overlap match allowed
 k = int(sys.argv[2])
 
 # Find nodes connected with direct edges
-res = findDirectEdges(IDs, sequence, k) 
+res = findDirectEdges(seqFromFasta, k) 
 for x in range(len(res)): 
     print(res[x])
