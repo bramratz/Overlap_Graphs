@@ -44,7 +44,7 @@ def findDirectEdges(sequences: Dict, k: int) -> List:
         if overlap(sSeq, tSeq, k):
             pairs.append(s + " " + t)
         if overlap(tSeq, sSeq, k):
-            pairs.append(s + " " + t)
+            pairs.append(t + " " + s)
     return pairs # return list of pairs 
             
 # List to hold lines from raw fasta file 
